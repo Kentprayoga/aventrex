@@ -18,7 +18,13 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        //         $exceptions->render(function (\Illuminate\Validation\ValidationException $e, \Illuminate\Http\Request $request) {
+        //     return response()->json([
+        //         'code' => 422,
+        //         'message' => 'Data yang diberikan tidak valid.',
+        //         'errors' => $e->errors(),
+        //     ], 422);
+        // });
     })
     ->withSchedule(function (Schedule $schedule) {      // tambah ini
         $schedule->command('leave:reset')->yearlyOn(1, 1, '00:00');

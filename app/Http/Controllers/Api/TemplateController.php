@@ -57,19 +57,4 @@ class TemplateController extends Controller
     /**
      * Versi ringkas list template tanpa file_url.
      */
-    public function listTemplates()
-    {
-        $templates = Template::with('category')->get()->map(function ($template) {
-            return [
-                'id' => $template->id,
-                'categorie_id' => $template->categorie_id,
-                'format_nomor' => $template->format_nomor,
-                'category_name' => $template->category->name ?? null,
-                'name' => $template->name,
-                // file_url tidak disertakan
-            ];
-        });
-
-        return response()->json(['success' => true, 'data' => $templates], 200);
-    }
 }

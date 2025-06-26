@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminLogController;
 use App\Http\Controllers\AuthController;
 
+use App\Http\Controllers\LogController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DivisionController;
@@ -22,7 +23,22 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Group routes with auth middleware
 Route::middleware([AdminOnly::class])->group(function () {
+    Route::get('/history', [ApprovalController::class, 'history'])->name('history.history');
+    Route::get('/history/download-all', [ApprovalController::class, 'downloadAll'])->name('approvals.downloadAll');
+    Route::get('/history/download/{id}', [ApprovalController::class, 'download'])->name('approvals.download');
+    Route::get('/history/download-filtered', [ApprovalController::class, 'downloadFiltered'])->name('approvals.downloadFiltered');
 
+    // aktivitas log
+    Route::get('/user-log', [LogController::class, 'userActivity'])->name('log.user');
+    Route::get('/admin-log', [LogController::class, 'adminActivity'])->name('log.admin');
+    Route::get('/activity-log', [LogController::class, 'select'])->name('log.index');
+    Route::get('/log/admin/export/excel', [LogController::class, 'exportAdminExcel'])->name('log.admin.export.excel');
+    Route::get('/log/admin/export/pdf', [LogController::class, 'exportAdminPdf'])->name('log.admin.export.pdf');
+
+    Route::get('/log/user/export/excel', [LogController::class, 'exportUserExcel'])->name('log.user.export.excel');
+    Route::get('/log/user/export/pdf', [LogController::class, 'exportUserPdf'])->name('log.user.export.pdf');
+    Route::get('/log/user/export/pdf', [LogController::class, 'exportUserPdf'])->name('log.user.export.pdf');
+    // 
     // Menampilkan riwayat dokumen dengan filter
     Route::get('/documents', [DocumentController::class, 'index'])->name('history.index');
 
@@ -34,9 +50,16 @@ Route::middleware([AdminOnly::class])->group(function () {
 
     // Admin routes under '/admin' prefix
     Route::prefix('admin')->group(function () {
-        Route::get('/approvals', [ApprovalController::class, 'index'])->name('approvals.index');
+        // Route::get('/approvals', [ApprovalController::class, 'index'])->name('approvals.index');
         Route::post('/approvals/{id}/approve', [ApprovalController::class, 'approve'])->name('approvals.approve');
         Route::post('/approvals/{id}/reject', [ApprovalController::class, 'reject'])->name('approvals.reject');
+        Route::post('/approvals/{id}/upload-signed', [ApprovalController::class, 'uploadSigned'])->name('approvals.uploadSigned');
+
+        Route::get('/approvals', [ApprovalController::class, 'categoryList'])->name('approvals.list');
+        Route::get('/approvals/index', [ApprovalController::class, 'index'])->name('approvals.index');
+
+
+
     });
     
     Route::get('/template', [TemplateController::class, 'index'])->name('template.index');

@@ -102,10 +102,6 @@ public function history(Request $request)
                 'tanggal_pengajuan' => $approval->document->tanggal_pengajuan ?? '-', 
             ];
         });
-        Log::create([
-            'user_id' => $user->id,
-            'action'  => 'melihat history approval',
-        ]);
     return response()->json($histories, 200);
 }
 
@@ -123,10 +119,6 @@ public function historyDetail($id, Request $request)
             'document.template.category' // data template dan category
         ])
         ->firstOrFail();
-        Log::create([
-            'user_id' => $user->id,
-            'action'  => 'melihat data history approval',
-        ]);
 
     return response()->json([
         'id' => $approval->id,
@@ -146,7 +138,8 @@ public function cancel($id, Request $request)
 {
     $user = $request->user();
 
-    $approval = Approval::where('id', $id)
+    $approval = Approval::with('document.template.category') // muat relasi sampai kategori
+        ->where('id', $id)
         ->where('user_id', $user->id)
         ->first();
 
@@ -154,17 +147,61 @@ public function cancel($id, Request $request)
         return response()->json(['message' => 'Approval tidak ditemukan.'], 404);
     }
 
-    if ($approval->status !== 'pending') {
-        return response()->json(['message' => 'Approval tidak bisa dibatalkan karena status bukan pending.'], 400);
+    // Validasi alasan (wajib)
+    $validator = Validator::make($request->all(), [
+        'alasan' => 'required|string|min:5',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json(['message' => 'Alasan wajib diisi dan minimal 5 karakter.'], 422);
+    }
+
+    // Simpan alasan ke kolom
+    $approval->alasan = $request->alasan;
+
+    // ✅ Kembalikan sisa cuti jika sebelumnya sudah di-approve dan ini dokumen cuti
+    if ($approval->status === 'approved') {
+        $document = $approval->document;
+
+        if (
+            $document &&
+            $document->template &&
+            $document->template->category &&
+            strtolower($document->template->category->name) === 'cuti'
+        ) {
+            $lamaHari = $document->lama_hari ?? 0;
+
+            if ($lamaHari > 0) {
+                $leaveBalance = \App\Models\LeaveBalance::where('user_id', $user->id)->first();
+
+                if ($leaveBalance) {
+                    $leaveBalance->used_leave = max(0, $leaveBalance->used_leave - $lamaHari);
+                    $leaveBalance->remaining_leave += $lamaHari;
+                    $leaveBalance->save();
+                }
+            }
+        }
     }
 
     $approval->status = 'cancelled';
     $approval->save();
 
+    Log::create([
+        'user_id' => $user->id,
+        'action'  => 'pembatalan approval',
+        'detail'  => 'Kategori: ' . ($approval->document->template->category->name ?? '-') .
+                    '; Template: ' . ($approval->document->template->name ?? '-') .
+                    '; Nomor Dokumen: ' . ($approval->document->document_number ?? '-') .
+                    '; Alasan: ' . $approval->alasan,
+    ]);
+
     return response()->json([
         'message' => 'Approval berhasil dibatalkan.',
-        'data' => $approval  // opsional: bisa dihapus jika tidak perlu
+        'data'    => $approval
     ], 200);
 }
+
+
+
 
 }

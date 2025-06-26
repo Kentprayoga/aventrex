@@ -42,14 +42,14 @@
     <hr class="sidebar-divider">
     <!-- Nav Item - Approvals -->
     <li class="nav-item">
-        <a class="nav-link" href="{{ route('approvals.index')}}">
+        <a class="nav-link" href="{{ route('approvals.list')}}">
             <i class="fas fa-fw fa-check-circle"></i>
             <span>Approvals</span></a>
     </li>
     <hr class="sidebar-divider">
     <!-- Nav Item - Laporan -->
     <li class="nav-item">
-        <a class="nav-link" href="{{ route('history.index')}}">
+        <a class="nav-link" href="{{ route('history.history') }}">
             <i class="fas fa-fw fa-chart-line"></i>
             <span>Laporan</span></a>
     </li>
@@ -64,7 +64,7 @@
     <!-- Heading -->
      <hr class="sidebar-divider">
     <li class="nav-item">
-        <a class="nav-link" href="{{ route('adminlog.index') }}">
+        <a class="nav-link" href="{{ route('log.index') }}">
             <i class="fas fa-fw fa-history"></i>
             <span>log aktivitas</span>
         </a>
