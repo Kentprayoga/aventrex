@@ -25,7 +25,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/approvals/{id}/cancel', [ApprovalController::class, 'cancel']);
     Route::post('/documents', [DocumentController::class, 'store']);
     Route::get('/logs', [LogController::class, 'getUserLogs']);
-
     Route::get('/approvals/history', [ApprovalController::class, 'history']);
     Route::get('approvals/history/{id}', [ApprovalController::class, 'historyDetail']);
     Route::get('/home-summary', [HomeController::class, 'index']);
@@ -37,4 +36,3 @@ Route::middleware('auth:sanctum')->group(function () {
 // routes/api.php
 
 Route::get('/templates', [TemplateController::class, 'index']);
-Route::get('/template', [TemplateController::class, 'listTemplates']);
