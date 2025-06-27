@@ -35,8 +35,8 @@ class TemplateController extends Controller
                                 ->latest()
                                 ->first();
 
-        $lastNumber = $lastTemplate ? (int) substr($lastTemplate->format_nomor, -4) : 0;
-        $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+        $lastNumber = $lastTemplate ? (int) substr($lastTemplate->format_nomor, -2) : 0;
+        $newNumber = str_pad($lastNumber + 1, 2, '0', STR_PAD_LEFT);
 
         $formatNomor = 'HR' . '/' . strtoupper($kategori) . '/' . $year . '/' . $newNumber;
         $safeName = str_replace(['/', '\\', ' '], '_', $formatNomor);
@@ -86,7 +86,7 @@ class TemplateController extends Controller
         $tahun = now()->year;
         $kategori = Category::find($request->categorie_id)->name;
         //        $formatNomor = 'HR' . '/' . strtoupper($request->name) . '/' . $year . '/' . $newNumber;
-        $format_nomor ='HR' . '/'. strtoupper(str_replace(' ', '_', $kategori)) . '/' . $tahun . '/' . str_pad($template->id, 3, '0', STR_PAD_LEFT);
+        $format_nomor ='HR' . '/'. strtoupper(str_replace(' ', '_', $kategori)) . '/' . $tahun . '/' . str_pad($template->id, 2, '0', STR_PAD_LEFT);
         $template->format_nomor = $format_nomor;
 
         // Cek jika ada file baru diupload

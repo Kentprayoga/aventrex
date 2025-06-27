@@ -30,7 +30,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('approvals/history/{id}', [ApprovalController::class, 'historyDetail']);
     Route::get('/home-summary', [HomeController::class, 'index']);
     Route::get('/profile', [ProfileController::class, 'getProfile']);
-    Route::post('/update-password', [ProfileController::class, 'updatePassword']);
 });
 
 

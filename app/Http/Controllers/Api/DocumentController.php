@@ -25,16 +25,27 @@ use Illuminate\Support\Facades\Request as GlobalRequest;
 
 class DocumentController extends Controller
 {
+    private function safeSetValue(TemplateProcessor $tp, string $key, $value): void
+    {
+        $tp->setValue($key, $value !== null && $value !== '' ? $value : '-');
+    }
     public function store(Request $request)
     {
         // 1. Validasi input
         $validator = Validator::make($request->all(), [
             'template_id' => 'required|exists:templates,id',
             'lama_hari' => 'nullable|integer|max:10',
-            'alasan' => 'required|string',
+            'alasan' => 'nullable|string',
             'tanggal_mulai' => 'nullable|date',
             'tanggal_selesai' => 'nullable|date',
-            'target_nip' => 'nullable|string|exists:profiles,nip',
+            'target_nip' => 'nullable|string',
+            'jam_mulai'   => 'nullable|date_format:H:i',
+            'jam_selesai' => 'nullable|date_format:H:i',
+            'catatan'     => 'nullable|string|max:255',
+            'catatan2'    => 'nullable|string|max:255',
+            'daftar_barang'          => 'nullable|array',
+            'daftar_barang.*.nama'   => 'required_with:daftar_barang|string|max:255',
+            'daftar_barang.*.jumlah' => 'required_with:daftar_barang|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -54,7 +65,7 @@ class DocumentController extends Controller
             $count = Document::where('template_id', $template->id)
                 ->whereYear('tanggal_pengajuan', $year)
                 ->count();
-            $newNumber = str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+            $newNumber = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
             $documentNumber = $template->format_nomor . '/' . $newNumber;
 
             // 4. Cari target user (jika ada)
@@ -100,26 +111,46 @@ class DocumentController extends Controller
             $targetPosition = $targetDetail?->position;
             $targetDivision = WorkDivision::where('detail_id', $targetDetail?->id)->first()?->division;
 
+            $barangList = '-';
+            if ($request->has('daftar_barang') && is_array($request->daftar_barang)) {
+                $barangList = '';
+                foreach ($request->daftar_barang as $idx => $item) {
+                    $barangList .= ($idx + 1).'. '.$item['nama'].' - '.$item['jumlah']."\n";
+                }
+            }
             // 9. Isi template Word
             $templateProcessor = new TemplateProcessor($templatePath);
-            $templateProcessor->setValue('name', $profile->name ?? '-');
+            $templateProcessor->setValue('nama', $profile->name ?? '-');
             $templateProcessor->setValue('nip', $profile->nip ?? '-');
             $templateProcessor->setValue('gender', $profile->gender ?? '-');
-            $templateProcessor->setValue('user_position', $position?->name ?? '-');
-            $templateProcessor->setValue('user_division', $division?->name ?? '-');
+            $templateProcessor->setValue('posisi', $position?->name ?? '-');
+            $templateProcessor->setValue('divisi', $division?->name ?? '-');
+            $templateProcessor->setValue(
+                'tglmasuk',
+                $targetProfile?->tglmasuk ? date('d-m-Y', strtotime($targetProfile->tglmasuk)) : '-'
+            );
 
-            $templateProcessor->setValue('target_name', $targetProfile->name ?? '-');
-            $templateProcessor->setValue('target_nip', $targetProfile->nip ?? '-');
-            $templateProcessor->setValue('target_position', $targetPosition?->name ?? '-');
-            $templateProcessor->setValue('target_division', $targetDivision?->name ?? '-');
 
-            $templateProcessor->setValue('document_number', $documentNumber);
+            $templateProcessor->setValue('nama_dituju', $targetProfile->name ?? '-');
+            $templateProcessor->setValue('nip_dituju', $targetProfile->nip ?? '-');
+            $templateProcessor->setValue('posisi_dituju', $targetPosition?->name ?? '-');
+            $templateProcessor->setValue('divisi_dituju', $targetDivision?->name ?? '-');
+            $templateProcessor->setValue(
+                'tanggal_masuk_target',
+                $targetProfile?->tglmasuk ? date('d-m-Y', strtotime($targetProfile->tglmasuk)) : '-'
+            );
+
+            $templateProcessor->setValue('nomor_surat', $documentNumber);
             $templateProcessor->setValue('alasan', $request->alasan ?? '-');
             $templateProcessor->setValue('tanggal_pengajuan', now()->format('d-m-Y'));
             $templateProcessor->setValue('lama_hari', $request->lama_hari ?? '-');
             $templateProcessor->setValue('tanggal_mulai', $request->tanggal_mulai ? date('d-m-Y', strtotime($request->tanggal_mulai)) : '-');
             $templateProcessor->setValue('tanggal_selesai', $request->tanggal_selesai ? date('d-m-Y', strtotime($request->tanggal_selesai)) : '-');
-
+            $templateProcessor->setValue('jam_mulai', $request->jam_mulai ? date('H:i', strtotime($request->jam_mulai)) : '-');
+            $templateProcessor->setValue('jam_selesai', $request->jam_selesai ? date('H:i', strtotime($request->jam_selesai)) : '-');
+            $templateProcessor->setValue('catatan', $request->catatan ?? '-');
+            $templateProcessor->setValue('catatan2', $request->catatan2 ?? '-');
+            $templateProcessor->setValue('daftar_barang', $barangList);
             // 10. Simpan file DOCX
             $timestamp = time();
             $filenameDocx = 'surat_' . $document->id . '_' . $timestamp . '.docx';

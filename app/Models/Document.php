@@ -17,7 +17,7 @@ class Document extends Model
     'tanggal_selesai',
     'lama_hari',
     'file_path',
-    'target_user_id',  // Tambahkan kolom tanggal_diajukan di sini
+    'target_user_id',
     ];
 
     public function user()
