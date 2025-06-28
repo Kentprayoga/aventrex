@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\AdminLogController;
 use App\Http\Controllers\AuthController;
-
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\LogController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
@@ -16,11 +16,31 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Middleware\AdminOnly;
 
-// Rute untuk login/logout
-Route::get('/login', [AuthController::class, 'login'])->name('login');
-Route::post('/login', [AuthController::class, 'authenticate']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+
+
+// Root (/) diarahkan ke login atau dashboard
+Route::get('/', function () {
+    if (Auth::check()) {
+        return redirect('/dashboard'); // kalau sudah login
+    }
+    return redirect('/login'); // kalau belum login
+});
+
+// Route login - hanya untuk tamu
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'login'])->name('login');
+    Route::post('/login', [AuthController::class, 'authenticate']);
+});
+
+// Route logout dan dashboard - hanya untuk user yang sudah login
+Route::middleware('auth')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    Route::get('/dashboard', function () {
+        return view('pages.dashboard'); // ganti sesuai view kamu
+    })->name('dashboard');
+});
 // Group routes with auth middleware
 Route::middleware([AdminOnly::class])->group(function () {
     Route::get('/history', [ApprovalController::class, 'history'])->name('history.history');
@@ -96,12 +116,5 @@ Route::middleware([AdminOnly::class])->group(function () {
     Route::post('/admin/chat', [MessageController::class, 'index']);
     Route::delete('/admin/chat/message/{id}', [MessageController::class, 'deleteMessage'])->name('admin.chat.delete');
     Route::delete('/admin/chat/{userId}/clear', [MessageController::class, 'clearMessages'])->name('admin.chat.clear');
-    Route::get('/admin/logs', [AdminLogController::class, 'index'])->name('adminlog.index');
-    Route::get('/admin/logs/export/pdf', [AdminLogController::class, 'exportPdf'])->name('adminlog.pdf');
 
-});
-
-// Route untuk dashboard, dengan middleware 'auth'
-Route::get('/', function () {
-    return view('auth.login'); // ini file splash.blade.php
 });

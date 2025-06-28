@@ -12,6 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // $middleware->web([
+        //     // daftar middleware web
+        //     \Illuminate\Auth\Middleware\Authenticate::class,
+        //     \Illuminate\Auth\Middleware\RedirectIfAuthenticated::class,
+        // ]);
         $middleware->alias([
             'role' => \App\Http\Middleware\AdminMiddleware::class,
         ]);

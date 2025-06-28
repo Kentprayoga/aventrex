@@ -16,7 +16,7 @@ class AuthController extends Controller
         // Jika pengguna sudah login, redirect ke halaman utama (dashboard atau halaman lainnya)
         if (Auth::check()) {
             // Menggunakan back() untuk kembali ke halaman sebelumnya
-            return back();
+            return redirect()->to('/dashboard');
         }
 
 
